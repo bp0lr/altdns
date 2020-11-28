@@ -16,7 +16,9 @@ from termcolor import colored
 import dns.resolver
 import re
 import os
+from pathlib import Path
 
+progress = 0
 logging.basicConfig(level=logging.CRITICAL)
 
 def get_alteration_words(wordlist_fname):
@@ -61,7 +63,7 @@ def insert_number_suffix_subdomains(args, alternation_words):
                 ext = tldextract.extract(line.strip())
                 current_sub = ext.subdomain.split(".")
                 for word in range(0, 10):
-                    for index, value in enumerate(current_sub):
+                    for index, _ in enumerate(current_sub):
                         #add word-NUM
                         original_sub = current_sub[index]
                         current_sub[index] = current_sub[index] + "-" + str(word)
@@ -90,7 +92,7 @@ def insert_dash_subdomains(args, alteration_words):
                 ext = tldextract.extract(line.strip())
                 current_sub = ext.subdomain.split(".")
                 for word in alteration_words:
-                    for index, value in enumerate(current_sub):
+                    for index, _ in enumerate(current_sub):
                         original_sub = current_sub[index]
                         current_sub[index] = current_sub[
                             index] + "-" + word.strip()
@@ -121,7 +123,7 @@ def join_words_subdomains(args, alteration_words):
                 ext = tldextract.extract(line.strip())
                 current_sub = ext.subdomain.split(".")
                 for word in alteration_words:
-                    for index, value in enumerate(current_sub):
+                    for index, _ in enumerate(current_sub):
                         original_sub = current_sub[index]
                         current_sub[index] = current_sub[index] + word.strip()
                         # join the list to make into actual subdomain (aa.bb.cc)
@@ -147,8 +149,10 @@ def get_cname(q, target, resolved_out):
     global starttime
     global found
     global resolverName
+
     lock.acquire()
     progress += 1
+
     lock.release()
     if progress % 500 == 0:
         lock.acquire()
@@ -158,15 +162,13 @@ def get_cname(q, target, resolved_out):
         lock.release()
         seconds = 0 if amountpersecond == 0 else int(left/amountpersecond)
         timeleft = str(datetime.timedelta(seconds=seconds))
-        print(
-            colored("[*] {0}/{1} completed, approx {2} left".format(progress, linecount, timeleft),
-                    "blue"))
+        print(colored("[*] {0}/{1} completed, approx {2} left".format(progress, linecount, timeleft), "blue"))
     final_hostname = target
     result = list()
     result.append(target)
     resolver = dns.resolver.Resolver()
-    if(resolverName is not None): #if a DNS server has been manually specified
-        resolver.nameservers = [r.strip() for r in resolverName.split(",")]
+    if "resolverName" in globals():
+        resolver.nameservers = resolverName
     try:
       for rdata in resolver.resolve(final_hostname, 'CNAME'):
         result.append(rdata.target)
@@ -198,27 +200,11 @@ def get_cname(q, target, resolved_out):
                     result.append(rdata.target)
             except:
                 pass
-        print(
-            colored(
-                result[0],
-                "red") +
-            " : " +
-            colored(
-                result[1],
-                "green"))
+        
+        print(colored(result[0], "red") + " : " + colored(result[1], "green"))
+
         if len(result) > 2 and result[2]:
-            print(
-                colored(
-                    result[0],
-                    "red") +
-                " : " +
-                colored(
-                    result[1],
-                    "green") +
-                ": " +
-                colored(
-                    result[2],
-                    "blue"))
+            print(colored(result[0], "red") + " : " + colored(result[1], "green") + ": " + colored(result[2],"blue"))
     q.put(result)
 
 def remove_duplicates(args):
@@ -248,35 +234,16 @@ def main():
     q = Queue()
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("-i", "--input",
-                        help="List of subdomains input", required=True)
-    parser.add_argument("-o", "--output",
-                        help="Output location for altered subdomains",
-                        required=True)
-    parser.add_argument("-w", "--wordlist",
-                        help="List of words to alter the subdomains with",
-                        required=False, default="words.txt")
-    parser.add_argument("-r", "--resolve",
-                        help="Resolve all altered subdomains",
-                        action="store_true")
-    parser.add_argument("-n", "--add-number-suffix",
-                        help="Add number suffix to every domain (0-9)",
-                        action="store_true")
-    parser.add_argument("-e", "--ignore-existing",
-                        help="Ignore existing domains in file",
-                        action="store_true")
-    parser.add_argument("-d", "--dnsservers",
-                        help="IP addresses of resolver(s) to use separated by `,`. (overrides system default)", required=False)
-
-    parser.add_argument(
-        "-s",
-        "--save",
-        help="File to save resolved altered subdomains to",
-        required=False)
-
-    parser.add_argument("-t", "--threads",
-                    help="Amount of threads to run simultaneously",
-                    required=False, default="0")
+    parser.add_argument("-i", "--input", help="List of subdomains input", required=True)
+    parser.add_argument("-o", "--output", help="Output location for altered subdomains", required=True)
+    parser.add_argument("-w", "--wordlist", help="List of words to alter the subdomains with", required=False, default="words.txt")
+    parser.add_argument("-r", "--resolve", help="Resolve all altered subdomains", action="store_true")
+    parser.add_argument("-n", "--add-number-suffix", help="Add number suffix to every domain (0-9)", action="store_true")
+    parser.add_argument("-e", "--ignore-existing", help="Ignore existing domains in file", action="store_true")
+    parser.add_argument("-d", "--dnsservers", help="IP addresses of resolver(s) to use separated by `,`. (overrides system default)", required=False)
+    parser.add_argument("-f", "--dnsfile", help="List of dns servers", required=False, default="resolvers.txt")
+    parser.add_argument("-s", "--save", help="File to save resolved altered subdomains to", required=False)
+    parser.add_argument("-t", "--threads", help="Amount of threads to run simultaneously", required=False, default="0")
 
     args = parser.parse_args()
 
@@ -319,13 +286,30 @@ def main():
         global lock
         global starttime
         global found
-        global resolverName       
+        global resolverName
         lock = Lock()
         found = {}
         progress = 0
         starttime = int(time.time())
         linecount = get_line_count(args.output)
-        resolverName = args.dnsservers
+        
+        if args.dnsservers == None and args.dnsfile != None:
+            try:                
+                dnsFile = Path(args.dnsfile)
+                if dnsFile.is_file():
+                    print( colored("[*] Using dns resolvers from {0}".format(args.dnsfile), "blue"))
+                    with open(args.dnsfile,"r") as f:
+                        resolver_Servers = f.read().splitlines()
+                    resolverName = resolver_Servers
+            except:
+                pass
+        else:
+            print( colored("[*] Using dns resolvers from -d flag", "blue"))
+            resolverName = [r.strip() for r in args.dnsservers.split(",")]
+            
+        if "resolverName" not in globals():
+            print( colored("[*] Using system dns to resolve domains", "blue"))
+
         with open(args.output, "r") as fp:
             for i in fp:
                 if args.threads:
