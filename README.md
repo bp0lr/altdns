@@ -14,7 +14,7 @@ Altdns works best with large datasets. Having an initial dataset of 200 or more 
 
 # Usage
 
-`# ./altdns.py -i subdomains.txt -o data_output -w words.txt -r -s results_output.txt`
+`# ./altdns.py -i subdomains.txt -o data_output -w words.txt -r -s results_output.txt -d 4.4.4.4,1.1.1.1,8.8.8.8`
 
 - `subdomains.txt` contains the known subdomains for an organization
 - `data_output` is a file that will contain the _massive_ list of altered and permuted subdomains
