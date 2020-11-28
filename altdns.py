@@ -267,8 +267,8 @@ def main():
     q = Queue()
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("-i", "--input", help="List of subdomains input", required=True)
-    parser.add_argument("-o", "--output", help="Output location for altered subdomains", required=True)
+    parser.add_argument("-i", "--input", help="List of subdomains input", required=False)
+    parser.add_argument("-o", "--output", help="Output location for altered subdomains", required=False)
     parser.add_argument("-w", "--wordlist", help="List of words to alter the subdomains with", required=False, default="words.txt")
     parser.add_argument("-r", "--resolve", help="Resolve all altered subdomains", action="store_true")
     parser.add_argument("-n", "--add-number-suffix", help="Add number suffix to every domain (0-9)", action="store_true")
