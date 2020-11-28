@@ -15,8 +15,10 @@ import logging
 from termcolor import colored
 import dns.resolver
 import re
+
 import os
 from pathlib import Path
+import requests
 
 progress = 0
 verboise = False
@@ -240,6 +242,26 @@ def get_line_count(filename):
         linecount = sum(1 for _ in lc)
     return linecount
 
+def updateResolvers():
+    
+    print( colored("[*] Updating dns resolvers list", "blue"))
+    dir_path = os.path.dirname(os.path.realpath(__file__))
+    file_path = os.path.join(dir_path, "resolvers.txt")
+
+    r = requests.get("https://raw.githubusercontent.com/janmasarik/resolvers/master/resolvers.txt", stream=True)
+    if r.ok:
+        print( colored("[*] The new file was saved to: {0}".format(os.path.abspath(file_path)), "blue"))
+        with open(file_path, 'wb') as f:
+            for chunk in r.iter_content(chunk_size=1024 * 8):
+                if chunk:
+                    f.write(chunk)
+                    f.flush()
+                    os.fsync(f.fileno())
+    else:  # HTTP status code 4XX/5XX
+        print("Download failed: status code {}\n{}".format(r.status_code, r.text))
+        print( colored("[-] Download failed: status code {}\n{}".format(r.status_code, r.text), "red"))
+    
+    print( colored("[*] done!", "blue"))
 
 def main():
     q = Queue()
@@ -256,10 +278,15 @@ def main():
     parser.add_argument("-s", "--save", help="File to save resolved altered subdomains to", required=False)
     parser.add_argument("-v", "--verboise", help="show verboise information", action="store_true", required=False)
     parser.add_argument("-t", "--threads", help="Amount of threads to run simultaneously", required=False, default="0")
-    parser.add_argument("-ip", "--ip", help="Display the ip address on the result", action="store_true", required=False, default="0")
+    parser.add_argument("--ip", help="Display the ip address on the result", action="store_true", required=False, default="0")
+    parser.add_argument("--update-resolvers", dest='updateResolvers', help="Download a new set of resolvers from @janmasarik list to the current folder", action="store_true", required=False)
 
     args = parser.parse_args()
 
+    if args.updateResolvers == True:
+        updateResolvers()
+        raise SystemExit(0)
+    
     if args.resolve:
         try:
             resolved_out = open(args.save, "a")
@@ -308,7 +335,6 @@ def main():
         starttime = int(time.time())
         linecount = get_line_count(args.output)
         
-        print(args.verboise)
         verboise = args.verboise
         showIP = args.ip
 
