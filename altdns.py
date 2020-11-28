@@ -19,6 +19,8 @@ import os
 from pathlib import Path
 
 progress = 0
+verboise = False
+showIP = False
 logging.basicConfig(level=logging.CRITICAL)
 
 def get_alteration_words(wordlist_fname):
@@ -149,6 +151,8 @@ def get_cname(q, target, resolved_out):
     global starttime
     global found
     global resolverName
+    global verboise
+    global showIP
 
     lock.acquire()
     progress += 1
@@ -162,7 +166,10 @@ def get_cname(q, target, resolved_out):
         lock.release()
         seconds = 0 if amountpersecond == 0 else int(left/amountpersecond)
         timeleft = str(datetime.timedelta(seconds=seconds))
-        print(colored("[*] {0}/{1} completed, approx {2} left".format(progress, linecount, timeleft), "blue"))
+        
+        if verboise == True:
+            print(colored("[*] {0}/{1} completed, approx {2} left".format(progress, linecount, timeleft), "blue"))
+
     final_hostname = target
     result = list()
     result.append(target)
@@ -201,10 +208,14 @@ def get_cname(q, target, resolved_out):
             except:
                 pass
         
-        print(colored(result[0], "red") + " : " + colored(result[1], "green"))
+        if showIP == True:
+            print(colored(result[0], "red") + " : " + colored(result[1], "green"))
 
-        if len(result) > 2 and result[2]:
-            print(colored(result[0], "red") + " : " + colored(result[1], "green") + ": " + colored(result[2],"blue"))
+            if len(result) > 2 and result[2]:
+                print(colored(result[0], "red") + " : " + colored(result[1], "green") + ": " + colored(result[2],"blue"))
+        else:
+            print(result[0])
+
     q.put(result)
 
 def remove_duplicates(args):
@@ -243,7 +254,9 @@ def main():
     parser.add_argument("-d", "--dnsservers", help="IP addresses of resolver(s) to use separated by `,`. (overrides system default)", required=False)
     parser.add_argument("-f", "--dnsfile", help="List of dns servers", required=False, default="resolvers.txt")
     parser.add_argument("-s", "--save", help="File to save resolved altered subdomains to", required=False)
+    parser.add_argument("-v", "--verboise", help="show verboise information", action="store_true", required=False)
     parser.add_argument("-t", "--threads", help="Amount of threads to run simultaneously", required=False, default="0")
+    parser.add_argument("-ip", "--ip", help="Display the ip address on the result", action="store_true", required=False, default="0")
 
     args = parser.parse_args()
 
@@ -251,8 +264,7 @@ def main():
         try:
             resolved_out = open(args.save, "a")
         except:
-            print("Please provide a file name to save results to "
-                  "via the -s argument")
+            print("Please provide a file name to save results to, via the -s argument")
             raise SystemExit
 
     alteration_words = get_alteration_words(args.wordlist)
@@ -287,28 +299,40 @@ def main():
         global starttime
         global found
         global resolverName
+        global verboise
+        global showIP
+
         lock = Lock()
         found = {}
         progress = 0
         starttime = int(time.time())
         linecount = get_line_count(args.output)
         
+        print(args.verboise)
+        verboise = args.verboise
+        showIP = args.ip
+
         if args.dnsservers == None and args.dnsfile != None:
             try:                
                 dnsFile = Path(args.dnsfile)
                 if dnsFile.is_file():
-                    print( colored("[*] Using dns resolvers from {0}".format(args.dnsfile), "blue"))
+                    if args.verboise == True:
+                        print( colored("[*] Using dns resolvers from {0}".format(args.dnsfile), "blue"))
+
                     with open(args.dnsfile,"r") as f:
                         resolver_Servers = f.read().splitlines()
                     resolverName = resolver_Servers
             except:
                 pass
         else:
-            print( colored("[*] Using dns resolvers from -d flag", "blue"))
+            if args.verboise == True:
+                print( colored("[*] Using dns resolvers from -d flag", "blue"))
+
             resolverName = [r.strip() for r in args.dnsservers.split(",")]
             
         if "resolverName" not in globals():
-            print( colored("[*] Using system dns to resolve domains", "blue"))
+            if args.verboise == True:
+                print( colored("[*] Using system dns to resolve domains", "blue"))
 
         with open(args.output, "r") as fp:
             for i in fp:
@@ -331,9 +355,9 @@ def main():
                threadhandler.pop().join()
                
         timetaken = str(datetime.timedelta(seconds=(int(time.time())-starttime)))
-        print(
-            colored("[*] Completed in {0}".format(timetaken),
-                    "blue"))
+        
+        if args.verboise == True:
+            print(colored("[*] Completed in {0}".format(timetaken),"blue"))
 
 if __name__ == "__main__":
     main()
