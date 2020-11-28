@@ -42,7 +42,7 @@ def insert_all_indexes(args, alteration_words):
                         # save full URL as line in file
                         full_url = "{0}.{1}.{2}\n".format(
                             actual_sub, ext.domain, ext.suffix)
-                        if actual_sub[-1:] is not ".":
+                        if actual_sub[-1:] != ".":
                             write_domain(args, wp, full_url)
                         current_sub.pop(index)
                     current_sub.append(word.strip())
@@ -99,7 +99,7 @@ def insert_dash_subdomains(args, alteration_words):
                         # save full URL as line in file
                         full_url = "{0}.{1}.{2}\n".format(
                             actual_sub, ext.domain, ext.suffix)
-                        if len(current_sub[0]) > 0 and actual_sub[:1] is not "-":
+                        if len(current_sub[0]) > 0 and actual_sub[:1] != "-":
                             write_domain(args, wp, full_url)
                         current_sub[index] = original_sub
                         # second dash alteration
@@ -109,7 +109,7 @@ def insert_dash_subdomains(args, alteration_words):
                         # save second full URL as line in file
                         full_url = "{0}.{1}.{2}\n".format(
                             actual_sub, ext.domain, ext.suffix)
-                        if actual_sub[-1:] is not "-":
+                        if actual_sub[-1:] != "-":
                             write_domain(args, wp, full_url)
                         current_sub[index] = original_sub
 
@@ -166,15 +166,15 @@ def get_cname(q, target, resolved_out):
     result.append(target)
     resolver = dns.resolver.Resolver()
     if(resolverName is not None): #if a DNS server has been manually specified
-        resolver.nameservers = [resolverName]
+        resolver.nameservers = [r.strip() for r in resolverName.split(",")]
     try:
-      for rdata in resolver.query(final_hostname, 'CNAME'):
+      for rdata in resolver.resolve(final_hostname, 'CNAME'):
         result.append(rdata.target)
     except:
         pass
-    if len(result) is 1:
+    if len(result) == 1:
       try:
-        A = resolver.query(final_hostname, "A")
+        A = resolver.resolve(final_hostname, "A")
         if len(A) > 0:
           result = list()
           result.append(final_hostname)
@@ -265,8 +265,8 @@ def main():
     parser.add_argument("-e", "--ignore-existing",
                         help="Ignore existing domains in file",
                         action="store_true")
-    parser.add_argument("-d", "--dnsserver",
-                        help="IP address of resolver to use (overrides system default)", required=False)
+    parser.add_argument("-d", "--dnsservers",
+                        help="IP addresses of resolver(s) to use separated by `,`. (overrides system default)", required=False)
 
     parser.add_argument(
         "-s",
@@ -325,7 +325,7 @@ def main():
         progress = 0
         starttime = int(time.time())
         linecount = get_line_count(args.output)
-        resolverName = args.dnsserver
+        resolverName = args.dnsservers
         with open(args.output, "r") as fp:
             for i in fp:
                 if args.threads:

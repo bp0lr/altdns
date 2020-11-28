@@ -8,15 +8,13 @@ Alternatively, the `-r` flag can be passed to altdns so that once this output is
 
 Altdns works best with large datasets. Having an initial dataset of 200 or more subdomains should churn out some valid subdomains via the alterations generated.
 
-Further information on attack methodology and this tool release can be found here: https://docs.google.com/presentation/d/1PCnjzCeklOeGMoWiE2IUzlRGOBxNp8K5hLQuvBNzrFY/
-
 # Installation
 
-`pip install py-altdns`
+`pip install -r requirements.txt`
 
 # Usage
 
-`# altdns -i subdomains.txt -o data_output -w words.txt -r -s results_output.txt`
+`# ./altdns.py -i subdomains.txt -o data_output -w words.txt -r -s results_output.txt`
 
 - `subdomains.txt` contains the known subdomains for an organization
 - `data_output` is a file that will contain the _massive_ list of altered and permuted subdomains
@@ -24,7 +22,7 @@ Further information on attack methodology and this tool release can be found her
 - the `-r` command resolves each generated, permuted subdomain
 - the `-s` command tells altdns where to save the results of the resolved permuted subdomains. `results_output.txt` will contain the final list of permuted subdomains found that are valid and have a DNS record.
 - the `-t` command limits how many threads the resolver will use simultaneously
-- `-d 1.2.3.4` overrides the system default DNS resolver and will use the specified IP address as the resolving server. Setting this to the authoritative DNS server of the target domain *may* increase resolution performance 
+- `-d 1.1.1.1,1.0.0.1` overrides the system default DNS resolvers and will use the specified IP addresses separated by , as the resolving server. Setting this to the authoritative DNS server of the target domain *may* increase resolution performance. (i.e. `9.9.9.9`, `1.1.1.1,1.0.0.1`)
 
 # Screenshots
 
