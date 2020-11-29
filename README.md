@@ -27,13 +27,13 @@ You need to clone this repo and run
 - the `-s` command tells altdns where to save the results of the resolved permuted subdomains. `results_output.txt` will contain the final list of permuted subdomains found that are valid and have a DNS record.
 - the `-t` command limits how many threads the resolver will use simultaneously
 - `-d 1.1.1.1,1.0.0.1` overrides the system default DNS resolvers and will use the specified IP addresses separated by , as the resolving server. Setting this to the authoritative DNS server of the target domain *may* increase resolution performance. (i.e. `9.9.9.9`, `1.1.1.1,1.0.0.1`)
-- `-f resolvers.txt` overrides the system default DNS resolvers using a list from file.
+- `-f resolvers.txt` overrides the system default DNS servers using a list from file.
 - `-v` display verboise information about the process
 - `--ip` display the ip address associated to any new domain
 - `--update-resolvers` update the file resolvers.txt using the updated list from @janmasarik project.
 
 # resolvers.txt
-Having a DNS resolvers list could help to increase the resolution performance.
+Having a DNS servers list could help to increase the resolution performance.
 @janmasarik has made an excellent job having a working list updated daily.
 
 You can update the list using the built-in flag `--update-resolvers` or doing a wget request directly. 

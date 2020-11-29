@@ -200,12 +200,17 @@ def get_cname(q, target, resolved_out):
                 found[str(result[1])] = found[str(result[1])] + 1
         else:
             found[str(result[1])] = 1
-        resolved_out.write(str(result[0]) + ":" + str(result[1]) + "\n")
+        
+        if showIP == True:
+            resolved_out.write(str(result[0]) + ":" + str(result[1]) + "\n")
+        else:    
+            resolved_out.write(str(result[0]) + "\n")
+
         resolved_out.flush()
         ext = tldextract.extract(str(result[1]))
         if ext.domain == "amazonaws":
             try:
-                for rdata in resolver.query(result[1], 'CNAME'):
+                for rdata in resolver.resolve(result[1], 'CNAME'):
                     result.append(rdata.target)
             except:
                 pass
@@ -343,7 +348,7 @@ def main():
                 dnsFile = Path(args.dnsfile)
                 if dnsFile.is_file():
                     if args.verboise == True:
-                        print( colored("[*] Using dns resolvers from {0}".format(args.dnsfile), "blue"))
+                        print( colored("[*] Using dns servers from {0}".format(args.dnsfile), "blue"))
 
                     with open(args.dnsfile,"r") as f:
                         resolver_Servers = f.read().splitlines()
@@ -352,7 +357,7 @@ def main():
                 pass
         else:
             if args.verboise == True:
-                print( colored("[*] Using dns resolvers from -d flag", "blue"))
+                print( colored("[*] Using dns servers from -d flag", "blue"))
 
             resolverName = [r.strip() for r in args.dnsservers.split(",")]
             
