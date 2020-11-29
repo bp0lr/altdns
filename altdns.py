@@ -201,12 +201,14 @@ def get_cname(q, target, resolved_out):
         else:
             found[str(result[1])] = 1
         
-        if showIP == True:
-            resolved_out.write(str(result[0]) + ":" + str(result[1]) + "\n")
-        else:    
-            resolved_out.write(str(result[0]) + "\n")
+        if resolved_out != None:
+            if showIP == True:
+                resolved_out.write(str(result[0]) + ":" + str(result[1]) + "\n")
+            else:    
+                resolved_out.write(str(result[0]) + "\n")
 
-        resolved_out.flush()
+            resolved_out.flush()
+
         ext = tldextract.extract(str(result[1]))
         if ext.domain == "amazonaws":
             try:
@@ -249,7 +251,7 @@ def get_line_count(filename):
 
 def updateResolvers():
     
-    print( colored("[*] Updating dns resolvers list", "blue"))
+    print( colored("[*] Updating dns servers list", "blue"))
     dir_path = os.path.dirname(os.path.realpath(__file__))
     file_path = os.path.join(dir_path, "resolvers.txt")
 
@@ -292,12 +294,18 @@ def main():
         updateResolvers()
         raise SystemExit(0)
     
-    if args.resolve:
-        try:
-            resolved_out = open(args.save, "a")
-        except:
-            print("Please provide a file name to save results to, via the -s argument")
-            raise SystemExit
+    #if args.resolve:
+        #try:
+        #    resolved_out = open(args.save, "a")
+        #except:
+        #    resolved_out = None
+        #    print("Please provide a file name to save results to, via the -s argument")
+        #    raise SystemExit
+
+    if args.save != None:
+        resolved_out = open(args.save, "a")
+    else:
+        resolved_out = None  
 
     alteration_words = get_alteration_words(args.wordlist)
 
@@ -373,9 +381,7 @@ def main():
                         while len(threadhandler) > 10:
                            threadhandler.pop().join()
                 try:
-                    t = threading.Thread(
-                        target=get_cname, args=(
-                            q, i.strip(), resolved_out))
+                    t = threading.Thread(target=get_cname, args=(q, i.strip(), resolved_out))
                     t.daemon = True
                     threadhandler.append(t)
                     t.start()
