@@ -1,4 +1,16 @@
 # Altdns
+
+
+# DEPRECATION
+
+I have written the same tool using golang.
+The result was 2x speed and many new options.
+
+Take a loot if you want :)
+
+[https://github.com/bp0lr/dmut](dmut)
+
+
 ### Subdomain discovery through alterations and permutations
 
 Altdns is a DNS recon tool that allows for the discovery of subdomains that conform to patterns. Altdns takes in words that could be present in subdomains under a domain (such as test, dev, staging) as well as takes in a list of subdomains that you know of.
