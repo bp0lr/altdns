@@ -1,7 +1,7 @@
 # Altdns
 
 
-# DEPRECATION
+# DEPRECATION NOTICE!
 
 I have written the same tool using golang.
 The result was 2x speed and many new options.
@@ -9,6 +9,9 @@ The result was 2x speed and many new options.
 Take a loot if you want :)
 
 [https://github.com/bp0lr/dmut](dmut)
+
+
+
 
 
 ### Subdomain discovery through alterations and permutations
